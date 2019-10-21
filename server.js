@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/activities', (req, res) => {
-    c.query(getAllActivities, (err, results) => {
+    connection.query(getAllActivities, (err, results) => {
         if(err) {
             return res.send(err);
         } else {

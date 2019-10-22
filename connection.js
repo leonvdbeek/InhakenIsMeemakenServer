@@ -1,10 +1,4 @@
-// Imports
-const express = require('express');
 const mysql = require('mysql');
-
-//Setting up express app
-const app = express();
-var PORT = process.env.PORT || 5000;
 
 //Starting MySQL database link
 var dbConfig = {
@@ -35,14 +29,4 @@ function handleDisconnect() {
 }
 handleDisconnect();
 
-// Routes
-const ActivitiesRoutes = require("./Routes/Activities")
-app.use("/activities", ActivitiesRoutes);
-const AttendanceRoutes = require("./Routes/Attendance")
-app.use("/attendance", AttendanceRoutes);
-const UsersRoutes = require("./Routes/Users")
-app.use("/users", UsersRoutes);
-
-app.listen(PORT, () => {
-    console.log('Server listening on port: ' + PORT);
-});
+module.exports= connection;

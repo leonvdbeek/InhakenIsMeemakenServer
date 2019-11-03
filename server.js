@@ -2,11 +2,13 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyparser = require('body-parser');
+const morgan = require('morgan');
 
 //Setting up express app
 const app = express();
 var PORT = process.env.PORT || 5000;
 app.use(bodyparser.json());
+app.use(morgan('dev'));
 
 //Starting MySQL database link
 var dbConfig = {
@@ -204,15 +206,15 @@ app.delete('/users/:id', (req, res) => {
 });
 
 app.post('/users', (req, res) => {
-    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;\
-    SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, v@password, @year, @birthday, @address);"
-    connection.query(query, [req.body.id, req.body.description], (err, results) => {
+    console.log(req.body.id)
+    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
+    connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, req.body.password, req.body.year, req.body.birthday, req.body.address], (err, results) => {
         if(err) {
             return res.send(err);
         } else {
             results.forEach(element => {
                 if (element.constructor == Array){
-                    res.send('Inserted user '+req.body.description+' with id: '+element[0].id);
+                    res.send('Inserted user '+req.body.firstname+' with id: '+element[0].id);
                 }
             });
         }
@@ -220,9 +222,8 @@ app.post('/users', (req, res) => {
 });
 
 app.put('/users', (req, res) => {
-    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;\
-    SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, v@password, @year, @birthday, @address);"
-    connection.query(query, [req.body.id, req.body.description], (err, results) => {
+    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
+    connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, req.body.password, req.body.year, req.body.birthday, req.body.address], (err, results) => {
         if(err) {
             return res.send(err);
         } else {
@@ -244,9 +245,88 @@ app.get('/attendance', (req, res) => {
         }
     });
 });
+
+app.get('/attendance/activity/:id', (req, res) => {
+    connection.query('SELECT * FROM attendance WHERE activities_id = ?', [req.params.id], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            return res.json({
+                data: results
+            });
+        }
+    });
+});
+
+app.get('/attendance/user/:id', (req, res) => {
+    connection.query('SELECT * FROM attendance WHERE users_id = ?', [req.params.id], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            return res.json({
+                data: results
+            });
+        }
+    });
+});
+
+app.get('/attendance/:act_id/:user_id', (req, res) => {
+    connection.query('SELECT * FROM attendance WHERE (activities_id = ? AND users_id = ?)', [req.params.act_id, req.params.user_id], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            return res.json({
+                data: results
+            });
+        }
+    });
+});
+
+app.delete('/attendance/:act_id/:user_id', (req, res) => {
+    connection.query('DELETE FROM attendance WHERE (activities_id = ? AND users_id = ?)', [req.params.act_id, req.params.user_id], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            return res.send("Deleted succesfully")
+        }
+    });
+});
+
+app.post('/attendance', (req, res) => {
+    connection.query("INSERT INTO attendance(activities_id, users_id, attending, status)VALUES(?,?,?,?);", [req.body.activities_id, req.body.users_id, req.body.attending, req.body.status], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            res.send('Inserted attendance for user ID: '+req.body.users_id+ 'for activity ID: '+ req.body.activities_id);
+        }
+    });
+});
+
+app.put('/attendance/:act_id/:user_id', (req, res) => {
+    connection.query("UPDATE attendance SET attending = ?, status = ? WHERE (activities_id = ? AND users_id = ?);", [req.body.attending, req.body.status, req.params.act_id, req.params.user_id], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            res.send('Updated attendance for user ID: '+req.params.user_id+ 'for activity ID: '+ req.params.act_id);
+        }
+    });
+});
 //--------------------------------------------------------------------------------------------------------------------------
 
+app.use((req, res, next) => {
+    const error = new Error('Not found');
+    error.status = 404;
+    next(error);
+})
 
+app.use((error, req, res, next) => {
+    res.status(error.status || 500);
+    res.json({
+        error: {
+            message: error.message
+        }
+    });
+});
 
 app.listen(PORT, () => {
     console.log('Server listening on port: ' + PORT);

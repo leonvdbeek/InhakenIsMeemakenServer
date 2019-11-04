@@ -3,10 +3,13 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyparser = require('body-parser');
 const morgan = require('morgan');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 //Setting up express app
 const app = express();
 var PORT = process.env.PORT || 5000;
+var JWT_SECRET = process.env.JWT || "4243";
 app.use(bodyparser.json());
 app.use(morgan('dev'));
 
@@ -206,28 +209,43 @@ app.delete('/users/:id', (req, res) => {
 });
 
 app.post('/users', (req, res) => {
-    console.log(req.body.id)
-    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
-    connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, req.body.password, req.body.year, req.body.birthday, req.body.address], (err, results) => {
-        if(err) {
-            return res.send(err);
+    bcrypt.hash(req.body.password, 10 , (err, hash) => {
+        if (err) {
+            return res.status(500).json({
+                error: err
+            });
         } else {
-            results.forEach(element => {
-                if (element.constructor == Array){
-                    res.send('Inserted user '+req.body.firstname+' with id: '+element[0].id);
-                }
+            var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
+            connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, hash, req.body.year, req.body.birthday, req.body.address], (err, results) => {
+            if(err) {
+                return res.send(err);
+            } else {
+                results.forEach(element => {
+                    if (element.constructor == Array){
+                        res.send('Inserted user '+req.body.firstname+' with id: '+element[0].id);
+                    }
+                });
+            }
             });
         }
     });
 });
 
 app.put('/users', (req, res) => {
-    var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
-    connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, req.body.password, req.body.year, req.body.birthday, req.body.address], (err, results) => {
-        if(err) {
-            return res.send(err);
+    bcrypt.hash(req.body.password, 10 , (err, hash) => {
+        if (err) {
+            return res.status(500).json({
+                error: err
+            });
         } else {
-            res.send("Updated succesfully!")
+            var query = "SET @id = ?;SET @roles_id = ?;SET @firstname = ?;SET @lastname = ?;SET @email = ?;SET @password = ?;SET @year = ?;SET @birthday = ?;SET @address = ?;CALL userAddOrEdit(@id, @roles_id, @firstname, @lastname, @email, @password, @year, @birthday, @address);"
+            connection.query(query, [req.body.id, req.body.roles_id, req.body.firstname, req.body.lastname, req.body.email, hash, req.body.year, req.body.birthday, req.body.address], (err, results) => {
+                if(err) {
+                    return res.send(err);
+                } else {
+                    res.send("Updated succesfully!")
+                }
+            });
         }
     });
 });
@@ -313,8 +331,51 @@ app.put('/attendance/:act_id/:user_id', (req, res) => {
 });
 //--------------------------------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------AUTH------------------------------------------------------------
+
+app.post('/login', (req, res) => {
+    connection.query("SELECT * FROM users WHERE email = ?;", [req.body.email], (err, results) => {
+        if(err) {
+            return res.send(err);
+        } else {
+            if (results.length > 0) {
+                // Email exists
+                bcrypt.compare(req.body.password, results[0].password, (err, result) => {
+                    if (err) {
+                        res.send('error')
+                    } else if (result == true) {
+                        //Password is right
+                        const token = jwt.sign({
+                                id: results[0].id,
+                                email: results[0].email
+                            }, 
+                            JWT_SECRET,
+                            {
+                                expiresIn: "1h"
+                            }
+                        );
+
+                        res.status(200).json({
+                            message: "Auth succesful",
+                            token: token
+                        });
+
+                    } else {
+                        // password is wrong
+                        res.send('Bad login');
+                    }
+                });
+            } else {
+                // Email does not exist
+                return res.send('Bad login');
+            }
+        }
+    });
+});
+
+//--------------------------------------------------------------------------------------------------------------------------
 app.use((req, res, next) => {
-    const error = new Error('Not found');
+    const error = new Error('Route does not exist');
     error.status = 404;
     next(error);
 })

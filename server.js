@@ -358,7 +358,8 @@ app.post('/login', (req, res) => {
 
                         res.status(200).json({
                             message: "Auth succesful",
-                            token: token
+                            token: token,
+                            user_id: results[0].id
                         });
 
                     } else {

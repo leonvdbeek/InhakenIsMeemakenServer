@@ -13,6 +13,15 @@ var PORT = process.env.PORT || 5000;
 var JWT_SECRET = process.env.JWT || "4243";
 app.use(bodyparser.json());
 app.use(morgan('dev'));
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", '*');
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    if (req.method === 'OPTIONS') {
+        res.header("Access-Control-Allow-Methods", "GET, POST, POST, DELETE");
+        return res.status(200).json({});
+    }
+    next();
+});
 
 //Starting MySQL database link
 var dbConfig = {

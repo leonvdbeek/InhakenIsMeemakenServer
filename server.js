@@ -5,6 +5,7 @@ const bodyparser = require('body-parser');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const checkAuth = require('./middleware/check-auth');
 
 //Setting up express app
 const app = express();
@@ -44,7 +45,7 @@ function handleDisconnect() {
 handleDisconnect();
 
 //----------------------------------------------------Activities queries----------------------------------------------------
-app.get('/activities', (req, res) => {
+app.get('/activities', checkAuth, (req, res) => {
     connection.query('SELECT * FROM activities', (err, results) => {
         if(err) {
             return res.send(err);
@@ -56,7 +57,7 @@ app.get('/activities', (req, res) => {
     });
 });
 
-app.get('/activities/:id', (req, res) => {
+app.get('/activities/:id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM activities WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -68,7 +69,7 @@ app.get('/activities/:id', (req, res) => {
     });
 });
 
-app.delete('/activities/:id', (req, res) => {
+app.delete('/activities/:id', checkAuth, (req, res) => {
     connection.query('DELETE FROM activities WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -78,7 +79,7 @@ app.delete('/activities/:id', (req, res) => {
     });
 });
 
-app.post('/activities', (req, res) => {
+app.post('/activities', checkAuth, (req, res) => {
     console.log(req.body)
     var query = "SET @id = ?;SET @name = ?;SET @start = ?;SET @end = ?;SET @description = ?;SET @location = ?; \
     CALL activityAddOrEdit(@id,@name,@start,@end,@description,@location);"
@@ -95,7 +96,7 @@ app.post('/activities', (req, res) => {
     });
 });
 
-app.put('/activities', (req, res) => {
+app.put('/activities', checkAuth, (req, res) => {
     console.log(req.body)
     var query = "SET @id = ?;SET @name = ?;SET @start = ?;SET @end = ?;SET @description = ?;SET @location = ?; \
     CALL activityAddOrEdit(@id,@name,@start,@end,@description,@location);"
@@ -112,7 +113,7 @@ app.put('/activities', (req, res) => {
 //--------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------Roles queries----------------------------------------------------
-app.get('/roles', (req, res) => {
+app.get('/roles', checkAuth, (req, res) => {
     connection.query('SELECT * FROM roles', (err, results) => {
         if(err) {
             return res.send(err);
@@ -124,7 +125,7 @@ app.get('/roles', (req, res) => {
     });
 });
 
-app.get('/roles/:id', (req, res) => {
+app.get('/roles/:id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM roles WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -136,7 +137,7 @@ app.get('/roles/:id', (req, res) => {
     });
 });
 
-app.delete('/roles/:id', (req, res) => {
+app.delete('/roles/:id', checkAuth, (req, res) => {
     connection.query('DELETE FROM roles WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -146,7 +147,7 @@ app.delete('/roles/:id', (req, res) => {
     });
 });
 
-app.post('/roles', (req, res) => {
+app.post('/roles', checkAuth, (req, res) => {
     var query = "SET @id = ?;SET @description = ?;CALL roleAddOrEdit(@id, @description);"
     connection.query(query, [req.body.id, req.body.description], (err, results) => {
         if(err) {
@@ -161,7 +162,7 @@ app.post('/roles', (req, res) => {
     });
 });
 
-app.put('/roles', (req, res) => {
+app.put('/roles', checkAuth, (req, res) => {
     var query = "SET @id = ?;SET @description = ?;CALL roleAddOrEdit(@id, @description);"
     connection.query(query, [req.body.id, req.body.description], (err, results) => {
         if(err) {
@@ -174,7 +175,7 @@ app.put('/roles', (req, res) => {
 //--------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------Users queries----------------------------------------------------
-app.get('/users', (req, res) => {
+app.get('/users', checkAuth, (req, res) => {
     connection.query('SELECT * FROM users', (err, results) => {
         if(err) {
             return res.send(err);
@@ -186,7 +187,7 @@ app.get('/users', (req, res) => {
     });
 });
 
-app.get('/users/:id', (req, res) => {
+app.get('/users/:id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM users WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -198,7 +199,7 @@ app.get('/users/:id', (req, res) => {
     });
 });
 
-app.delete('/users/:id', (req, res) => {
+app.delete('/users/:id', checkAuth, (req, res) => {
     connection.query('DELETE FROM users WHERE id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -208,7 +209,7 @@ app.delete('/users/:id', (req, res) => {
     });
 });
 
-app.post('/users', (req, res) => {
+app.post('/users', checkAuth, (req, res) => {
     bcrypt.hash(req.body.password, 10 , (err, hash) => {
         if (err) {
             return res.status(500).json({
@@ -231,7 +232,7 @@ app.post('/users', (req, res) => {
     });
 });
 
-app.put('/users', (req, res) => {
+app.put('/users', checkAuth, (req, res) => {
     bcrypt.hash(req.body.password, 10 , (err, hash) => {
         if (err) {
             return res.status(500).json({
@@ -252,7 +253,7 @@ app.put('/users', (req, res) => {
 //--------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------Attendance queries----------------------------------------------------
-app.get('/attendance', (req, res) => {
+app.get('/attendance', checkAuth, (req, res) => {
     connection.query('SELECT * FROM attendance', (err, results) => {
         if(err) {
             return res.send(err);
@@ -264,7 +265,7 @@ app.get('/attendance', (req, res) => {
     });
 });
 
-app.get('/attendance/activity/:id', (req, res) => {
+app.get('/attendance/activity/:id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM attendance WHERE activities_id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -276,7 +277,7 @@ app.get('/attendance/activity/:id', (req, res) => {
     });
 });
 
-app.get('/attendance/user/:id', (req, res) => {
+app.get('/attendance/user/:id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM attendance WHERE users_id = ?', [req.params.id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -288,7 +289,7 @@ app.get('/attendance/user/:id', (req, res) => {
     });
 });
 
-app.get('/attendance/:act_id/:user_id', (req, res) => {
+app.get('/attendance/:act_id/:user_id', checkAuth, (req, res) => {
     connection.query('SELECT * FROM attendance WHERE (activities_id = ? AND users_id = ?)', [req.params.act_id, req.params.user_id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -300,7 +301,7 @@ app.get('/attendance/:act_id/:user_id', (req, res) => {
     });
 });
 
-app.delete('/attendance/:act_id/:user_id', (req, res) => {
+app.delete('/attendance/:act_id/:user_id', checkAuth, (req, res) => {
     connection.query('DELETE FROM attendance WHERE (activities_id = ? AND users_id = ?)', [req.params.act_id, req.params.user_id], (err, results) => {
         if(err) {
             return res.send(err);
@@ -310,7 +311,7 @@ app.delete('/attendance/:act_id/:user_id', (req, res) => {
     });
 });
 
-app.post('/attendance', (req, res) => {
+app.post('/attendance', checkAuth, (req, res) => {
     connection.query("INSERT INTO attendance(activities_id, users_id, attending, status)VALUES(?,?,?,?);", [req.body.activities_id, req.body.users_id, req.body.attending, req.body.status], (err, results) => {
         if(err) {
             return res.send(err);
@@ -320,7 +321,7 @@ app.post('/attendance', (req, res) => {
     });
 });
 
-app.put('/attendance/:act_id/:user_id', (req, res) => {
+app.put('/attendance/:act_id/:user_id', checkAuth, (req, res) => {
     connection.query("UPDATE attendance SET attending = ?, status = ? WHERE (activities_id = ? AND users_id = ?);", [req.body.attending, req.body.status, req.params.act_id, req.params.user_id], (err, results) => {
         if(err) {
             return res.send(err);

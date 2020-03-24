@@ -1,2 +1,2 @@
-# InhakenIsMeemaken
-Website om de activiteiten en aanwezigheid van de leden bij te houden
+# InhakenIsMeemakenServer
+Back end om de activiteiten en aanwezigheid van leden bij te houden
